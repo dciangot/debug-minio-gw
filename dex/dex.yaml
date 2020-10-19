@@ -1,0 +1,67 @@
+# The base path of dex and the external name of the OpenID Connect service.
+# This is the canonical URL that all clients MUST use to refer to dex. If a
+# path is provided, dex's HTTP service will listen at a non-root URL.
+issuer: http://0.0.0.0:5556/dex
+
+# The storage configuration determines where dex stores its state. Supported
+# options include SQL flavors and Kubernetes third party resources.
+#
+# See the storage document at Documentation/storage.md for further information.
+storage:
+  type: memory
+  #config:
+  #  file: /tmp/example/dex.db
+
+# Configuration for the HTTP endpoints.
+web:
+  http: 0.0.0.0:5556
+  # Uncomment for HTTPS options.
+  # https: 127.0.0.1:5554
+  # tlsCert: /etc/dex/tls.crt
+  # tlsKey: /etc/dex/tls.key
+
+# Configuration for telemetry
+telemetry:
+  http: 0.0.0.0:5558
+
+# Default values shown below
+oauth2:
+  responseTypes: [ "code", "token", "id_token" ] # also allowed are "token" and "id_token"
+    # By default, Dex will ask for approval to share data with application
+    # (approval for sharing data from connected IdP to Dex is separate process on IdP)
+  skipApprovalScreen: true
+    # If only one authentication method is enabled, the default behavior is to
+    # go directly to it. For connected IdPs, this redirects the browser away
+    # from application to upstream provider such as the Google login page
+  alwaysShowLoginScreen: false
+    # Uncommend the passwordConnector to use a specific connector for password grants
+#   passwordConnector: local
+
+# Instead of reading from an external storage, use this list of clients.
+#
+# If this option isn't chosen clients may be added through the gRPC API.
+staticClients:
+- id: minio-auth
+  redirectURIs:
+  - 'http://0.0.0.0:9000/minio/'
+  - 'http://0.0.0.0:9000/minio/login/openid'
+  name: 'Minio auth'
+  secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+
+connectors: []
+
+# Let dex keep a list of passwords which can be used to login to dex.
+enablePasswordDB: true
+
+# A static list of passwords to login the end user. By identifying here, dex
+# won't look in its underlying storage for passwords.
+#
+# If this option isn't chosen users may be added through the gRPC API.
+staticPasswords:
+- email: "admin@example.com"
+  # bcrypt hash of the string "password"
+  # use this to get dex auth for minio: 
+  #    user:"admin@example.com" pwd: password 
+  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+  username: "admin"
+  userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"

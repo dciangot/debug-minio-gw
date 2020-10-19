@@ -1,0 +1,57 @@
+version: '3.7'
+services:
+  dex:
+    image: quay.io/dexidp/dex:v2.23.0
+    network_mode: host
+    command:
+      - "serve"
+      - "/tmp/dex/dex.yaml"
+    volumes:
+      - ./dex:/tmp/dex
+  opa:
+    image: openpolicyagent/opa:0.18.0
+    network_mode: host
+    command:
+      - "run"
+      - "--server"
+      - "--log-level=debug"
+      - "--log-format=text"
+      - "--addr=0.0.0.0:8181"
+      - "/policies"
+    volumes:
+      - ./policies:/policies
+  minio_gw:
+    network_mode: host
+    image: minio/minio
+    command:
+      - "gateway"
+      - "s3"
+      - "http://0.0.0.0:9001"
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin1
+      AWS_SECRET_ACCESS_KEY: minioadmin1
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_POLICY_OPA_URL: "http://0.0.0.0:8181/v1/data/httpapi/authz/allow"
+      MINIO_IDENTITY_OPENID_CLIENT_ID: minio-auth
+      #MINIO_IDENTITY_OPENID_SCOPES: "openid,profile,email"
+      MINIO_IDENTITY_OPENID_CONFIG_URL: "http://0.0.0.0:5556/dex/.well-known/openid-configuration"
+  minio_origin:
+    network_mode: host
+    image: minio/minio
+    command:
+      - "server"
+      - "/data"
+      - "--address"
+      - ":9001"
+    environment:
+      MINIO_ACCESS_KEY: minioadmin1
+      MINIO_SECRET_KEY: minioadmin1
+  minio_client:
+    network_mode: host
+    image: minio/mc
+    entrypoint:
+      - "sleep"
+      - "365d"
+    environment:
+      MC_HOST_myminio: http://miniodciangot:miniodciangot@0.0.0.0:9000
